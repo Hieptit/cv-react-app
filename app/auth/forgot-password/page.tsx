@@ -29,6 +29,8 @@ export default function ForgotPasswordPage() {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
       })
 
+      console.log('Reset password redirect URL:', `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`)
+
       if (error) throw error
 
       setSuccess("Password reset link has been sent to your email!")
