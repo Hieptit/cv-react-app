@@ -1,179 +1,141 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
-import { Eye, EyeOff, Lock, CheckCircle, XCircle } from "lucide-react"
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
-  const passwordRequirements = [
-    { text: "At least 8 characters", test: (pwd: string) => pwd.length >= 8 },
-    { text: "Contains uppercase letter", test: (pwd: string) => /[A-Z]/.test(pwd) },
-    { text: "Contains lowercase letter", test: (pwd: string) => /[a-z]/.test(pwd) },
-    { text: "Contains number", test: (pwd: string) => /\d/.test(pwd) },
-    { text: "Contains special character", test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd) },
-  ]
-
-  useEffect(() => {
-    // Handle the auth callback
-    const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) {
-        setError("Invalid or expired reset link")
-      }
+  const validatePassword = (password: string) => {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long'
     }
+    if (!/[A-Z]/.test(password)) {
+      return 'Password must contain at least one uppercase letter'
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'Password must contain at least one lowercase letter'
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'Password must contain at least one number'
+    }
+    if (!/[!@#$%^&*]/.test(password)) {
+      return 'Password must contain at least one special character (!@#$%^&*)'
+    }
+    return null
+  }
 
-    handleAuthCallback()
-  }, [])
-
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
-    setError("")
-    setSuccess("")
+    setError(null)
 
+    // Validate passwords match
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
+      setError('Passwords do not match')
       return
     }
 
-    const allRequirementsMet = passwordRequirements.every((req) => req.test(password))
-    if (!allRequirementsMet) {
-      setError("Password does not meet all requirements")
-      setLoading(false)
+    // Validate password requirements
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: password,
+        password: password
       })
 
       if (error) throw error
 
-      setSuccess("Password updated successfully! Redirecting to sign in...")
+      setMessage('Password updated successfully!')
+      // Redirect to signin page after successful password update
       setTimeout(() => {
-        router.push("/auth/signin")
+        router.push('/auth/signin')
       }, 2000)
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Choose New Password</CardTitle>
-          <CardDescription className="text-center">Enter your new password below</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="flex min-h-screen flex-col items-center justify-center py-2">
+      <div className="w-full max-w-md space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight">
+            Choose New Password
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Your password must:
+          </p>
+          <ul className="mt-2 text-sm text-gray-600 list-disc pl-5">
+            <li>Be at least 8 characters long</li>
+            <li>Include at least one uppercase letter</li>
+            <li>Include at least one lowercase letter</li>
+            <li>Include at least one number</li>
+            <li>Include at least one special character (!@#$%^&*)</li>
+          </ul>
+        </div>
 
-            {success && (
-              <Alert>
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            )}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              New Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your new password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium">
+              Confirm New Password
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              required
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+          {message && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="text-sm text-green-700">{message}</div>
             </div>
+          )}
 
-            {password && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Password Requirements:</Label>
-                <div className="space-y-1">
-                  {passwordRequirements.map((req, index) => {
-                    const isMet = req.test(password)
-                    return (
-                      <div key={index} className="flex items-center space-x-2 text-sm">
-                        {isMet ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className={isMet ? "text-green-700" : "text-red-700"}>{req.text}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Updating password..." : "Update Password"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <div>
+            <button
+              type="submit"
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              Update Password
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
