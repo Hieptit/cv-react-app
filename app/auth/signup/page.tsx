@@ -52,7 +52,7 @@ export default function SignUpPage() {
             name,
           },
           emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-        },
+        }
       })
 
       if (error) throw error
@@ -72,6 +72,8 @@ export default function SignUpPage() {
         }
 
         setSuccess("Account created successfully! Please check your email to verify your account.")
+        console.log("Verification email should be sent to:", email)
+        console.log("Redirect URL:", `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`)
         setTimeout(() => {
           router.push("/auth/signin")
         }, 3000)
