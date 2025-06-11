@@ -10,8 +10,8 @@ const nextConfig = {
     unoptimized: true,
   },
   env: {
-    NEXT_PUBLIC_SUPABASE_URL: 'https://yhbwfspcdrgnnpzkqmag.supabase.co',
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloYndmc3BjZHJnbm5wemtxbWFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0MDEyMjAsImV4cCI6MjA2NDk3NzIyMH0.G1RiH_N5FyM-EjV4jqdYlBcYESPpKNZSMmiU1NkQOx0',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://fnxteqtnogvkrqtazkyd.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueHRlcXRub2d2a3JxdGF6a3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2MDkxNDMsImV4cCI6MjA2NTE4NTE0M30.4ArywxNUNRJn5A-NQefVrFlvO1VA9qhBWYWhpYRiOxM',
     NEXT_PUBLIC_SITE_URL: 'http://45.76.161.44'
   }
 }
