@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
@@ -10,6 +10,21 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Get the access_token from URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const access_token = hashParams.get('access_token')
+    const refresh_token = hashParams.get('refresh_token')
+
+    if (access_token) {
+      supabase.auth.setSession({
+        access_token,
+        refresh_token: refresh_token || ''
+      })
+    }
+  }, [])
 
   const validatePassword = (password: string) => {
     if (password.length < 8) {
