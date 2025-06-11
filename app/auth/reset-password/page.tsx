@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
@@ -10,20 +10,33 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Get the access_token from URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const access_token = hashParams.get('access_token')
-    const refresh_token = hashParams.get('refresh_token')
+    const handleHashChange = async () => {
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const type = hashParams.get('type')
+        const access_token = hashParams.get('access_token')
 
-    if (access_token) {
-      supabase.auth.setSession({
-        access_token,
-        refresh_token: refresh_token || ''
-      })
+        if (type === 'recovery' && access_token) {
+          const { data, error } = await supabase.auth.getSession()
+          if (error) {
+            console.error('Session error:', error.message)
+            setError('Invalid or expired reset link')
+          }
+        }
+      } catch (err) {
+        console.error('Hash change error:', err)
+        setError('Error processing reset link')
+      }
     }
+
+    // Call it once on mount
+    handleHashChange()
+
+    // Add listener for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
   const validatePassword = (password: string) => {
@@ -49,13 +62,11 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError(null)
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
     }
 
-    // Validate password requirements
     const passwordError = validatePassword(password)
     if (passwordError) {
       setError(passwordError)
@@ -63,18 +74,22 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      })
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
 
+      if (!sessionData.session) {
+        throw new Error('No active session')
+      }
+
+      const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
 
       setMessage('Password updated successfully!')
-      // Redirect to signin page after successful password update
       setTimeout(() => {
         router.push('/auth/signin')
       }, 2000)
     } catch (error) {
+      console.error('Update password error:', error)
       setError(error instanceof Error ? error.message : 'An error occurred')
     }
   }
